@@ -1,6 +1,5 @@
 'use client';
 import React from 'react'
-import PropertyCard from './reservations-list/reservation-card';
 import ReservationCard from './reservations-list/reservation-card';
 
 type ReservationsItem = {
@@ -12,7 +11,8 @@ type ReservationsItem = {
   category: string;
   price: string;
   reservationDate: string;
-  reservedBy: string;
+  reservedBy?: string; 
+  isFavoritedByCurrentUser?: boolean;
 };
 
 type ReservationsListProps = {
@@ -39,6 +39,7 @@ export default function ReservationsList({ data }: ReservationsListProps) {
                 price={item.price}
                 reservationDate={item.reservationDate} 
                 reservedBy={item.reservedBy}
+                isFavoritedByCurrentUser={item.isFavoritedByCurrentUser}
               />
             ))}
           </div>

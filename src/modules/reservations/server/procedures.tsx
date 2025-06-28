@@ -52,13 +52,12 @@ export const reservationsRouter = createTRPCRouter({
           success: true,
           message: "Reservation created successfully",
         };
-        
       } catch (error) {
         // Re-throw tRPC errors as-is
         if (error instanceof TRPCError) {
           throw error;
         }
-        
+
         console.error("Error reservation [create]:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -66,7 +65,7 @@ export const reservationsRouter = createTRPCRouter({
         });
       }
     }),
-    
+
   getUserReservations: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.betterAuthUserId) {
       throw new TRPCError({
@@ -81,7 +80,19 @@ export const reservationsRouter = createTRPCRouter({
           userId: ctx.betterAuthUserId,
         },
         include: {
-          listing: true,
+          listing: {
+            include: {
+              // Only include the current user's favorite status
+              favouritedBy: {
+                where: {
+                  userId: ctx.betterAuthUserId,
+                },
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
           user: true,
         },
         orderBy: {
@@ -89,7 +100,27 @@ export const reservationsRouter = createTRPCRouter({
         },
       });
 
-    return { reservations }
+      // Check if reservations were found
+      if (reservations.length === 0) {
+        return {
+          reservations: [],
+        };
+      }
+
+      // Transform the data to include isFavorited boolean
+      const reservationsWithFavoriteStatus = reservations.map(
+        (reservation) => ({
+          ...reservation,
+          listing: {
+            ...reservation.listing,
+            isFavorited: reservation.listing.favouritedBy.length > 0,
+            // Remove the favouritedBy array since we don't need it anymore
+            favouritedBy: undefined,
+          },
+        })
+      );
+
+      return { reservations: reservationsWithFavoriteStatus };
     } catch (error) {
       console.error("Error reservations [getUserReservations]:", error);
       throw new TRPCError({
@@ -158,7 +189,6 @@ export const reservationsRouter = createTRPCRouter({
           success: true,
           message: "Reservation deleted successfully",
         };
-        
       } catch (error) {
         // Re-throw tRPC errors as-is
         if (error instanceof TRPCError) {
@@ -167,7 +197,7 @@ export const reservationsRouter = createTRPCRouter({
 
         console.error("Error reservations [delete]:", error);
 
-         // Handle specific Prisma errors
+        // Handle specific Prisma errors
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           if (error.code === "P2025") {
             throw new TRPCError({

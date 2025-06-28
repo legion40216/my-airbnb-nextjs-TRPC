@@ -45,16 +45,19 @@ export default async function middleware(request: NextRequest) {
     return;
   }
 
-  // If not logged in and trying to access protected route
+ // If not logged in and trying to access protected route
   if (!isLoggedIn && !isPublicRoute) {
     let callbackUrl = nextUrl.pathname;
     if (nextUrl.search) {
       callbackUrl += nextUrl.search;
     }
-    return NextResponse.redirect(new URL(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, nextUrl));
-  }
 
-  return;
+    // If the callback URL is the same as the login route, redirect to home
+    const redirectUrl = new URL("/", nextUrl);
+    redirectUrl.searchParams.set("callbackUrl", callbackUrl);
+    // Redirect to login page with callback URL
+    return NextResponse.redirect(redirectUrl);
+  }
 }
 
 export const config = {

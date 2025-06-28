@@ -1,16 +1,17 @@
 // ListingSection - Client Component
 "use client";
-import { trpc } from "@/trpc/client";
 import React, { Suspense } from "react";
+
 import { ErrorBoundary } from "react-error-boundary";
-import Loading from "../../loading";
-import Error from "../../error";
+import { trpc } from "@/trpc/client";
+
+import useCountries from "@/hooks/useCountries";
+
 import ListingInfo from "../components/listing-info";
 import { categories } from "@/constants/categoryIcons";
 import ListingImg from "../components/listing-img";
 import Heading from "@/components/global-ui/headings";
 import ListingReservation from "../components/listing-reservation";
-import useCountries from "@/hooks/useCountries";
 import EmptyState from "@/components/global-ui/empty-state";
 
 interface ListingSectionProps {
@@ -19,8 +20,8 @@ interface ListingSectionProps {
 
 export const ListingSection = ({ listingId }: ListingSectionProps) => {
   return (
-    <Suspense fallback={<Loading />}>
-      <ErrorBoundary fallback={<Error />}>
+    <Suspense fallback={<div>Loading...</div>}>
+      <ErrorBoundary fallback={<EmptyState title="Error loading listing" subtitle="Please try again later." />}>
         <ListingSectionContent listingId={listingId} />
       </ErrorBoundary>
     </Suspense>
@@ -40,11 +41,13 @@ const ListingSectionContent = ({ listingId }: { listingId: string }) => {
       />
     );
 
+  // Use the custom hook to get country details
   const { getByValue } = useCountries();
   const country = listing.locationValue
     ? getByValue(listing.locationValue)
     : null;
 
+  // Format the listing data for display
   const formattedListing = {
     listingId: listing.id,
     title: listing.title,
@@ -60,13 +63,10 @@ const ListingSectionContent = ({ listingId }: { listingId: string }) => {
     price: listing.price || 0,
     imgSrc: listing.imgSrc,
   };
-
   const subtitle = `${formattedListing.locationRegion}, ${formattedListing.locationLabel}`;
-
   const category = categories.find((item) => {
     return item.label === formattedListing.category;
   });
-
   const formattedReservations = listing.reservations.map((item) => ({
     startDate: new Date(item?.startDate),
     endDate: new Date(item?.endDate),

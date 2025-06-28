@@ -8,9 +8,10 @@ export default function RentHomeBtn() {
   const { user, isPending } = useCurrentUser();
   const { openModal } = useMultiModalStore();
   const { openModal: openAuthModal } = useAuthModalStore();
+  const isLoggedIn = !!user
 
   const handleClick = () => {
-    if (user) {
+    if (isLoggedIn) {
       openModal("rent");
     } else {
       openAuthModal();
@@ -27,7 +28,7 @@ export default function RentHomeBtn() {
     >
       {isPending ? (
         <span className="animate-pulse">...</span>
-      ) : user ? (
+      ) : isLoggedIn ? (
         "Rent your home"
       ) : (
         "Airbnb your home"
