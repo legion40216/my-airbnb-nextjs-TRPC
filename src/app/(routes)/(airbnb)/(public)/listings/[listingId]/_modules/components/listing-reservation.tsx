@@ -1,12 +1,16 @@
 import React from 'react'
 import { useEffect, useMemo } from "react";
+
 import { toast } from "sonner";
 import { formatter } from '@/utils/formatters';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ReservationFormValues, reservationSchema, ReservationServerValues } from "@/schemas";
+import { ReservationFormValues, reservationSchema, reservationServerSchema, ReservationServerValues } from "@/schemas";
 import { differenceInDays, eachDayOfInterval } from "date-fns";
 import { trpc } from '@/trpc/client';
+import { useCurrentUser } from '@/hooks/client-auth-utils';
+import { useAuthModalStore } from '@/hooks/useAuthModalStore';
+import { z } from 'zod';
 
 import {
     Card,
@@ -48,6 +52,17 @@ export default function ListingReservation({
   const { isSubmitting } = formState;
   const startDate = watch("startDate");
   const endDate = watch("endDate");
+  const {user} = useCurrentUser()
+  const isLoggedIn = !!user;
+  const { openModal: openAuthModal } = useAuthModalStore();
+
+  // Authentication handler
+  const handleAuthRequired = () => {
+    if (!isLoggedIn) {
+      openAuthModal("login");
+      return;
+    }
+  };
 
   // Memoizing disabled dates to avoid unnecessary recalculations
   const disabledDates = useMemo(() => {
@@ -84,12 +99,7 @@ export default function ListingReservation({
     onSuccess: () => {
       utils.listings.getByListingId.invalidate();
       toast.success(toastMessage);
-      form.reset({
-        startDate: undefined,
-        endDate: undefined,
-        totalPrice: 0,
-        listingId,
-      });
+      form.reset();
     },
     onError: (error) => {
       toast.error(error.message || "Something went wrong.");
@@ -97,27 +107,35 @@ export default function ListingReservation({
     },
   });
   // Utility to transform form data into server data
-  const toServerData = (formData: ReservationFormValues): ReservationServerValues => {
-    if (!formData.startDate || !formData.endDate) {
-      throw new Error("Both start date and end date are required");
-    }
-    return {
-      startDate: formData.startDate,
-      endDate: formData.endDate,
-      totalPrice: formData.totalPrice,
-      listingId: formData.listingId,
-    };
+  const safelyToServerReservationData = (
+    formData: ReservationFormValues
+  ): z.SafeParseReturnType<ReservationFormValues, ReservationServerValues> => {
+    return reservationServerSchema.safeParse(formData);
   };
+
   const onSubmit = async (data: ReservationFormValues) => {
+    const toastId = toast.loading(toastLoading);
+    // Check authentication before proceeding
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+
+    //parses values to reservationservervalues 
+    const result = safelyToServerReservationData(data);
+    if (!result.success) {
+      toast.error(result.error.errors[0]?.message || "Validation failed");
+      toast.dismiss(toastId);
+      return;
+    }
+
     if (!data.startDate || !data.endDate) {
       toast.error("Please select both check-in and check-out dates.");
       return;
     }
 
-    const toastId = toast.loading(toastLoading);
-
     try {
-      await createReservation.mutateAsync(toServerData(data));
+      await createReservation.mutateAsync(result.data);
     } catch (error) {
       // Optional: you can handle additional logging here
     } finally {
@@ -125,8 +143,24 @@ export default function ListingReservation({
     }
   };
 
+  // Handle reservation button click
+  const handleReserveClick = () => {
+    if (!isLoggedIn) {
+      handleAuthRequired();
+      return;
+    }
+    handleSubmit(onSubmit)();
+  };
+
   // Check if reservation can be made
   const canReserve = startDate && endDate && !isSubmitting;
+  
+  // Determine button text and behavior
+  const getButtonText = () => {
+    if (!isLoggedIn) return 'Log in to reserve';
+    if (!startDate || !endDate) return 'Select dates';
+    return 'Reserve';
+  };
 
   return (
     <Card className='gap-0 space-y-4'>
@@ -156,13 +190,14 @@ export default function ListingReservation({
 
       <Separator/>
      
+      {/* Reserve button - Submit button */}
       <div className='px-4'>
         <ActionBtn 
-          onClick={handleSubmit(onSubmit)} 
-          disabled={!canReserve}
+          onClick={handleReserveClick}
+          disabled={!isLoggedIn ? false : !canReserve} // Allow clicking when not logged in to trigger auth
           type="button"
         >
-          {!startDate || !endDate ? 'Select dates' : 'Reserve'}
+          {getButtonText()}
         </ActionBtn>
       </div>
 

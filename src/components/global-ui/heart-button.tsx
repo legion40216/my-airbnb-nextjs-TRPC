@@ -4,19 +4,43 @@ import useFavorite from '@/hooks/useFavorite';
 import { useAuthModalStore } from '@/hooks/useAuthModalStore';
 import { useCurrentUser } from '@/hooks/client-auth-utils';
 import { trpc } from '@/trpc/client';
+
 import { Button } from '../ui/button';
 
 type HeartButtonProps = {
   listingId: string;
+  isFavoritedByCurrentUser?: boolean;
 };
 
-export default function HeartButton({ listingId }: HeartButtonProps) {
+export default function HeartButton({ listingId, isFavoritedByCurrentUser }: HeartButtonProps) {
   const { user, isPending } = useCurrentUser();
   const modalAuthSwitcher = useAuthModalStore();
 
-  // Function to handle click event on the heart button
-  // If user is logged in, toggle favorite
-  // If not logged in, open auth modal instead of toggling favorite
+  const isLoggedIn = !!user
+
+  // Always fetch if logged in to enable optimistic updates
+  const { data, isLoading } = trpc.favourites.getIsUserFavoritedbyId.useQuery(
+    { listingId },
+    {
+      enabled: isLoggedIn,
+      // Use prop as initial data to prevent loading flash
+      initialData: isFavoritedByCurrentUser
+        ? { isFavorited: isFavoritedByCurrentUser, listingId }
+        : undefined,
+      staleTime: 60 * 1000, // Consider data fresh for 1 minute
+    }
+  );
+
+  // Use the query data (which includes optimistic updates) or fall back to prop
+  const hasFavorited = data?.isFavorited ?? isFavoritedByCurrentUser ?? false;
+
+  const { toggleFavorite, toggleIsLoading } = useFavorite({
+    listingId,
+    isFavorited: hasFavorited,
+  });
+  
+  const isLoadingFavourites = isLoading || toggleIsLoading || isPending;
+  
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isLoggedIn) {
@@ -25,30 +49,6 @@ export default function HeartButton({ listingId }: HeartButtonProps) {
       toggleFavorite();
     }
   };
-
-  // If user is not logged in, we don't need to fetch favourites
-  // !!user is to make it into a boolean value
-  const isLoggedIn = !!user && !isPending;
-
-  // Fetch user favourites only if logged in
-  // This avoids unnecessary queries for non-logged-in users
-  const { data, isLoading } = trpc.favourites.getIsUserFavoritedbyId.useQuery(
-    { listingId },
-    {
-      enabled: isLoggedIn,
-    }
-  );
-  
-  const hasFavorited = data?.isFavorited || false;
-
-  const { toggleFavorite, toggleIsLoading } = useFavorite({
-    listingId,
-    isFavorited: hasFavorited,
-  });
-  
-  // Determine if we are still loading favourites
-  // This will be true if the query is loading or if data is undefined or if the toggle operation is in progress
-  const isLoadingFavourites = isLoading || toggleIsLoading || isPending;
 
   return (
     <Button
@@ -71,4 +71,3 @@ export default function HeartButton({ listingId }: HeartButtonProps) {
     </Button>
   );
 }
-

@@ -7,7 +7,6 @@ interface ListingImgProps {
   imgSrc: string;
 }
 
-
 export default function ListingImg({
 listingId,
 imgSrc

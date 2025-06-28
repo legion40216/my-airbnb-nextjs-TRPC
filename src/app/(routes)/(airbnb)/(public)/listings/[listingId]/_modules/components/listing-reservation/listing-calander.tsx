@@ -20,15 +20,16 @@ export default function ListingCalendar({ form, disabledDates }: ListingCalendar
   // Watch for changes in startDate and endDate
   const startDate = form.watch("startDate");
   const endDate = form.watch("endDate");
+  
   // Create a DateRange object
   const dateRange: DateRange = {
     from: startDate || undefined,
     to: endDate || undefined,
   };
+
   // Function to handle date range changes
   const handleDateRangeChange = (range: DateRange | undefined) => {
     if (!range) {
-      // Clear selection - cast to any to bypass TypeScript error
       form.setValue("startDate", undefined as any);
       form.setValue("endDate", undefined as any);
       return;
@@ -36,23 +37,19 @@ export default function ListingCalendar({ form, disabledDates }: ListingCalendar
 
     const { from, to } = range;
 
-    // If only 'from' is selected (single date click)
     if (from && !to) {
       form.setValue("startDate", from);
       form.setValue("endDate", undefined as any);
       return;
     }
 
-    // If both dates are selected
     if (from && to) {
-      // Check if the user clicked on an already selected date to "undo"
       if (startDate && endDate) {
         const fromTime = from.getTime();
         const toTime = to.getTime();
         const startTime = startDate.getTime();
         const endTime = endDate.getTime();
 
-        // If user clicked the same range again, clear the end date
         if (fromTime === startTime && toTime === endTime) {
           form.setValue("startDate", from);
           form.setValue("endDate", undefined as any);
@@ -60,24 +57,47 @@ export default function ListingCalendar({ form, disabledDates }: ListingCalendar
         }
       }
 
-      // Normal case: set the range
       form.setValue("startDate", from);
       form.setValue("endDate", to);
     }
   };
-  // Function to check if a date is disabled
-  const isDateDisabled = (date: Date) => {
-    // Disable past dates
+
+  // Check if date is in the past
+  const isPastDate = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (date < today) {
-      return true;
-    }
+    return date < today;
+  };
 
-    // Disable reserved dates
+  // Check if date is reserved
+  const isReservedDate = (date: Date) => {
     return disabledDates.some((disabled) => 
       date.toDateString() === disabled.toDateString()
     );
+  };
+
+  // Function to check if a date is disabled (for Calendar component)
+  const isDateDisabled = (date: Date) => {
+    return isPastDate(date) || isReservedDate(date);
+  };
+
+  // Custom day content renderer
+  const customDayContent = (date: Date) => {
+    const dayNumber = date.getDate();
+    const isReserved = isReservedDate(date);
+    const isPast = isPastDate(date);
+
+    if (isReserved) {
+      return (
+        <div className="relative w-full h-full flex items-center justify-center">
+          <span className="text-red-500 font-semibold">{dayNumber}</span>
+          <div className="absolute inset-0 bg-red-100 opacity-30 rounded"></div>
+          <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></div>
+        </div>
+      );
+    }
+
+    return dayNumber;
   };
 
   return (
@@ -93,7 +113,9 @@ export default function ListingCalendar({ form, disabledDates }: ListingCalendar
               onSelect={handleDateRangeChange}
               numberOfMonths={1}
               disabled={isDateDisabled}
-              initialFocus
+              formatters={{
+                formatDay: customDayContent,
+              }}
               className="w-full block"
               classNames={{
                 months: "w-full block",
@@ -101,7 +123,7 @@ export default function ListingCalendar({ form, disabledDates }: ListingCalendar
                 head_row: "w-full flex justify-around",
                 row: "w-full flex mt-2",
                 cell: "flex-1 text-center",
-                day: "w-full h-9 hover:bg-accent hover:text-accent-foreground",
+                day: "w-full h-9 hover:bg-accent hover:text-accent-foreground relative",
                 day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
                 day_range_start: "bg-primary text-primary-foreground rounded-l-md hover:bg-primary hover:text-primary-foreground",
                 day_range_end: "bg-primary text-primary-foreground rounded-r-md hover:bg-primary hover:text-primary-foreground", 

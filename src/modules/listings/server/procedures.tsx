@@ -69,7 +69,7 @@ export const listingsRouter = createTRPCRouter({
     .query(async ({ input }) => {
       try {
         const { listingId } = input;
-
+      
         const listing = await prisma.listing.findUnique({
           where: {
             id: listingId,

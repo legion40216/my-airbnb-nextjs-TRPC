@@ -20,6 +20,7 @@ type ReservationCardProps = {
   price: string;
   reservationDate: string;
   reservedBy?: string; 
+  isFavoritedByCurrentUser?: boolean;
 };
 
 export default function ReservationCard({
@@ -31,10 +32,12 @@ export default function ReservationCard({
   price,
   reservationDate, 
   reservedBy,
+  isFavoritedByCurrentUser = false,
 }: ReservationCardProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
+  // TRPC mutation for deleting the reservation
   const utils = trpc.useUtils();
   const toastLoading = "Deleting Reservation... Please wait.";
   const toastMessage = "Reservation deleted successfully!";
@@ -50,6 +53,8 @@ export default function ReservationCard({
       setOpen(false);
     },
   });
+
+  // Function to handle deletion of the reservation
   const handleDelete = async () => {
     const toastId = toast.loading(toastLoading);
     try {
@@ -70,7 +75,10 @@ export default function ReservationCard({
           onClick={() => router.push(`/listings/${listingId}`)}
         >
           <div className="absolute top-3 right-3 z-10">
-            <HeartButton listingId={reservationId} />
+            <HeartButton 
+            listingId={listingId} 
+            isFavoritedByCurrentUser={isFavoritedByCurrentUser}
+            />
           </div>
           <Image
             fill

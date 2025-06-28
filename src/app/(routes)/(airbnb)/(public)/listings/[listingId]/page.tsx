@@ -1,17 +1,17 @@
 import React from 'react';
-import { getQueryClient, trpc } from '@/trpc/server'; // Ensure these paths are correct
+import { getQueryClient, trpc } from '@/trpc/server'; 
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
-import ListingView from './_modules/view/listing-view'; // Ensure this path is correct
+
+import ListingView from './_modules/view/listing-view'; 
 
 export const dynamic = 'force-dynamic';
 
-interface PageParams {
-  params: Promise<{ 
-    listingId: string;
-  }>;
-}
-
-export default async function ListingPage({ params }: PageParams) {
+export default async function ListingPage({
+  params,
+}: {
+  params: Promise<{ listingId: string }>;
+}) {
+  // Await params before using its properties
   const { listingId } = await params;
 
   const queryClient = getQueryClient();

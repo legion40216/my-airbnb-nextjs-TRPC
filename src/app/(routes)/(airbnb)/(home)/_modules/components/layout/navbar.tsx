@@ -8,7 +8,7 @@ export default async function Navbar() {
   return (
     <div className="container mx-auto py-2 px-4">
       <div
-        className=" flex items-center justify-between gap-2 
+      className="flex items-center justify-between gap-2 
       container mx-auto py-2 px-4 border-b"
       >
         <NavLeft />
