@@ -38,7 +38,7 @@ export default function PropertyCard({
   const toastMessage = "Property deleted successfully!";
   const deleteListing = trpc.properties.delete.useMutation({
     onSuccess: (data) => {
-      utils.properties.getPropertiesByUserId.invalidate();
+      utils.properties.getUserProperties.invalidate();
       toast.success(toastMessage);
       setOpen(false);
     },

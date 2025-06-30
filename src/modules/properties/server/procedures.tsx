@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const propertiesRouter = createTRPCRouter({
   // This procedure fetches all listings created by the authenticated user
-  getPropertiesByUserId: protectedProcedure.query(async ({ ctx }) => {
+  getUserProperties: protectedProcedure.query(async ({ ctx }) => {
     if (!ctx.betterAuthUserId) {
       throw new TRPCError({
         code: "UNAUTHORIZED",

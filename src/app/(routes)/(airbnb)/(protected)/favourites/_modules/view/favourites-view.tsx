@@ -1,5 +1,7 @@
-import Headings from "@/components/global-ui/headings";
 import React from "react";
+
+import Headings from "@/components/global-ui/headings";
+import { FavouritesSection } from "../sections/favourites-section";
 
 export default function FavouritesView() {
   return (

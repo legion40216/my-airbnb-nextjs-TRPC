@@ -134,12 +134,28 @@ export const favouriteRouter = createTRPCRouter({
                   image: true,
                 },
               },
+              favouritedBy: {
+                where: {
+                  userId: ctx.betterAuthUserId,
+                },
+              },
             },
           },
         },
       });
 
-      return { favourites };
+      // Map favourites to include isFavorited status
+      const favouritesWithStatus = favourites.map(fav => ({
+        ...fav,
+        isFavorited: fav.listing.favouritedBy.length > 0,
+        // Optionally remove favouritedBy from the nested listing to avoid circular references
+        listing: {
+          ...fav.listing,
+          favouritedBy: undefined,
+        },
+      }));
+
+      return { favourites: favouritesWithStatus };
     } catch (error) {
       console.error("Error favourite [getUserFavourites]:", error);
       throw new TRPCError({

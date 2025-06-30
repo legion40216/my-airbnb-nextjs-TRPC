@@ -105,7 +105,7 @@ const form = useForm<ListingFormValues>({
   const utils = trpc.useUtils();
   const createListing = trpc.listings.create.useMutation({
     onSuccess: (data) => {
-      utils.listings.getAll.invalidate();
+      utils.listings.getSearch.invalidate();
       toast.success(toastMessage);
       closeModal();
     },
