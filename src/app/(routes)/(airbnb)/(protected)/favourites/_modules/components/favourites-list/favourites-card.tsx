@@ -4,11 +4,6 @@ import Image from "next/image";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import HeartButton from "@/components/global-ui/heart-button";
-import CardBtn from "@/components/global-ui/airbnb-buttons/card-btn";
-import ConfirmModal from "@/components/modal/confirm-modal";
-
-import { trpc } from "@/trpc/client";
-import { toast } from "sonner";
 
 type PropertyCardProps = {
   id: string;
@@ -28,34 +23,6 @@ export default function PropertyCard({
   price,
 }: PropertyCardProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-
-  const utils = trpc.useUtils();
-  const toastLoading = "Deleting property... Please wait.";
-  const toastMessage = "Property deleted successfully!";
-  const deleteListing = trpc.properties.delete.useMutation({
-    onSuccess: (data) => {
-      utils.properties.getPropertiesByUserId.invalidate();
-      toast.success(toastMessage);
-      setOpen(false);
-    },
-    onError: (error) => {
-      console.error("Error deleting property:", error);
-      toast.error(error.message || "Something went wrong.");
-      setOpen(false);
-    },
-  });
-  const handleDelete = async () => {
-    const toastId = toast.loading(toastLoading);
-    try {
-      await deleteListing.mutateAsync({ listingId });
-      // Success handling is done in onSuccess callback
-    } catch (error) {
-      // Error handling is done in onError callback
-    } finally {
-      toast.dismiss(toastId);
-    }
-  };
 
   return (
     <div className="space-y-2">
@@ -90,15 +57,6 @@ export default function PropertyCard({
           </div>
         </div>
       </div>
-      
-      <ConfirmModal onConfirm={handleDelete} open={open} setOpen={setOpen}>
-        <CardBtn
-          onClick={() => setOpen(true)}
-          disabled={deleteListing.isPending}
-        >
-          Delete property
-        </CardBtn>
-      </ConfirmModal>
     </div>
   );
 }
