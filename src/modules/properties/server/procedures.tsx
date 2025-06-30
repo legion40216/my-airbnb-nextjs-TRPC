@@ -22,9 +22,26 @@ export const propertiesRouter = createTRPCRouter({
         orderBy: {
           createdAt: "desc",
         },
+        include: {
+          favouritedBy: {
+            where: {
+              userId: ctx.betterAuthUserId,
+            },
+            select: {
+              id: true, // Or listingId, doesn't matter here
+            },
+          },
+        },
       });
 
-      return { listings };
+    const listingsWithFavoriteStatus = listings.map((listing) => ({
+    ...listing,
+    isFavorited: listing.favouritedBy.length > 0,
+    favouritedBy: undefined,
+    }));
+
+    return { listings: listingsWithFavoriteStatus };
+
     } catch (error) {
       console.error("Error properties [getPropertiesByUserId]:", error);
       throw new TRPCError({

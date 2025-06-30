@@ -1,5 +1,6 @@
 'use client';
 import React from 'react'
+
 import PropertyCard from './properties-list/property-card';
 
 type PropertiesItem = {
@@ -9,6 +10,7 @@ type PropertiesItem = {
   imgSrc: string;
   category: string;
   price: string;
+  isFavoritedByCurrentUser?: boolean;
 };
 
 type PropertiesListProps = {
@@ -33,6 +35,7 @@ export default function PropertiesList({ data }: PropertiesListProps) {
                 imgSrc={item.imgSrc}
                 category={item.category}
                 price={item.price}
+                isFavoritedByCurrentUser={item.isFavoritedByCurrentUser}
               />
             ))}
           </div>

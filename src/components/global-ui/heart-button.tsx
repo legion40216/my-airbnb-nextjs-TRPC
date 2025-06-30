@@ -22,7 +22,7 @@ export default function HeartButton({ listingId, isFavoritedByCurrentUser }: Hea
   const { data, isLoading } = trpc.favourites.getIsUserFavoritedbyId.useQuery(
     { listingId },
     {
-      enabled: isLoggedIn,
+      enabled: isLoggedIn && (isFavoritedByCurrentUser === undefined), // Only fetch if logged in or prop is provided
       // Use prop as initial data to prevent loading flash
       initialData: isFavoritedByCurrentUser
         ? { isFavorited: isFavoritedByCurrentUser, listingId }

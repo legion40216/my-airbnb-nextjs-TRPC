@@ -70,6 +70,7 @@ export default function ReservationCard({
   return (
     <div className="space-y-2">
       <div>
+        {/* Image */}
         <div
           className="aspect-square overflow-hidden rounded-xl relative group cursor-pointer border"
           onClick={() => router.push(`/listings/${listingId}`)}
@@ -87,6 +88,7 @@ export default function ReservationCard({
             alt="Reservation"
           />
         </div>
+        {/* Details */}
         <div>
           <p className="font-semibold text-lg">
             <span className="text-neutral-600">{locationRegion}, </span>
@@ -96,7 +98,7 @@ export default function ReservationCard({
             {reservationDate}
           </p>
         </div>
-
+         {/* Price and Reserved By */}
         <div className="flex flex-col gap-1">
           <div className="flex gap-1">
             <p className="font-semibold">{price}</p>
@@ -110,8 +112,13 @@ export default function ReservationCard({
           </div>
         </div>
       </div>
-
-      <ConfirmModal onConfirm={handleDelete} open={open} setOpen={setOpen}>
+        {/* Delete Button */}
+      <ConfirmModal 
+      onConfirm={handleDelete} 
+      open={open} 
+      setOpen={setOpen}
+      isDisabled={deleteListing.isPending}
+      >
         <CardBtn
         onClick={() => setOpen(true)}
         disabled={deleteListing.isPending}

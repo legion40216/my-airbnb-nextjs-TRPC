@@ -82,7 +82,6 @@ export const reservationsRouter = createTRPCRouter({
         include: {
           listing: {
             include: {
-              // Only include the current user's favorite status
               favouritedBy: {
                 where: {
                   userId: ctx.betterAuthUserId,
@@ -99,13 +98,6 @@ export const reservationsRouter = createTRPCRouter({
           startDate: "desc",
         },
       });
-
-      // Check if reservations were found
-      if (reservations.length === 0) {
-        return {
-          reservations: [],
-        };
-      }
 
       // Transform the data to include isFavorited boolean
       const reservationsWithFavoriteStatus = reservations.map(

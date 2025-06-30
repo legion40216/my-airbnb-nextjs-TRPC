@@ -175,6 +175,8 @@ export const favouriteRouter = createTRPCRouter({
           },
           select: { id: true },
         });
+        
+        console.log("Favourite found:", favourite);
 
         return { 
           isFavorited: !!favourite,
