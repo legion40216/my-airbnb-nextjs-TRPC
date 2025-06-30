@@ -39,7 +39,7 @@ export default function HeartButton({ listingId, isFavoritedByCurrentUser }: Hea
     isFavorited: hasFavorited,
   });
   
-  const isLoadingFavourites = isLoading || toggleIsLoading || isPending;
+  const isLoadingFavourites = isLoading || toggleIsLoading
   
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();

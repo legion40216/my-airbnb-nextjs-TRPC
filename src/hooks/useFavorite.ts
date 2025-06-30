@@ -72,6 +72,7 @@ const useFavorite = ({ listingId, isFavorited }: UseFavoriteProps) => {
     onSettled: () => {
       // Invalidate to refetch and ensure we're in sync with server
       utils.favourites.getIsUserFavoritedbyId.invalidate({ listingId });
+      utils.favourites.getUserFavourites.invalidate();
     },
   });
 

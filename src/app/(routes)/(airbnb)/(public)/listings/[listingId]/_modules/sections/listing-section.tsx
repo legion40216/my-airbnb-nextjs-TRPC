@@ -10,9 +10,10 @@ import useCountries from "@/hooks/useCountries";
 import ListingInfo from "../components/listing-info";
 import { categories } from "@/constants/categoryIcons";
 import ListingImg from "../components/listing-img";
-import Heading from "@/components/global-ui/headings";
+
 import ListingReservation from "../components/listing-reservation";
 import EmptyState from "@/components/global-ui/empty-state";
+import Headings from "@/components/global-ui/headings";
 
 interface ListingSectionProps {
   listingId: string;
@@ -21,7 +22,12 @@ interface ListingSectionProps {
 export const ListingSection = ({ listingId }: ListingSectionProps) => {
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <ErrorBoundary fallback={<EmptyState title="Error loading listing" subtitle="Please try again later." />}>
+      <ErrorBoundary fallback={
+        <EmptyState 
+        title="Error loading listing" 
+        subtitle="Please try again later." 
+        />
+        }>
         <ListingSectionContent listingId={listingId} />
       </ErrorBoundary>
     </Suspense>
@@ -74,16 +80,19 @@ const ListingSectionContent = ({ listingId }: { listingId: string }) => {
 
   return (
     <div className="space-y-4">
-      <Heading 
-      title={formattedListing.title} 
-      subtitle={subtitle} 
-      />
+      {/* Listing Title and Image Section */}
+      <div className="space-y-4">
+        <Headings 
+        title={formattedListing.title} 
+        subtitle={subtitle} 
+        />
 
-      <ListingImg
-        listingId={formattedListing.listingId}
-        imgSrc={formattedListing.imgSrc}
-      />
-
+        <ListingImg
+          listingId={formattedListing.listingId}
+          imgSrc={formattedListing.imgSrc}
+        />
+      </div>
+      {/* Information and Reservation Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 md:gap-10">
         <ListingInfo 
         category={category} 

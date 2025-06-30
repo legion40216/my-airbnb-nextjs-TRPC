@@ -26,7 +26,7 @@ export const PropertiesSection = () => {
 };
 
 const PropertiesSectionContent = () => {
-  const [data] = trpc.properties.getPropertiesByUserId.useSuspenseQuery();
+  const [data] = trpc.properties.getUserProperties.useSuspenseQuery();
   const properties = data.listings;
   // Handle no reservations case
   if (properties.length === 0) {

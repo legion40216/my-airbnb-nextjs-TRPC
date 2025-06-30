@@ -1,6 +1,7 @@
 'use client';
 import React from 'react'
-import PropertyCard from './favourites-list/favourites-card';
+
+import FavouriteCard from './favourites-list/favourite-card';
 
 type FavouritesItem = {
   id: string;
@@ -9,6 +10,7 @@ type FavouritesItem = {
   imgSrc: string;
   category: string;
   price: string;
+  isFavoritedByCurrentUser?: boolean;
 };
 
 type FavouritesListProps = {
@@ -25,7 +27,7 @@ export default function FavouritesList({ data }: FavouritesListProps) {
               sm:grid-cols-[repeat(auto-fill,minmax(180px,1fr))]"
           >
             {data?.map((item) => (
-              <PropertyCard
+              <FavouriteCard
                 key={item.id}
                 id={item.id}
                 locationRegion= {item.locationRegion}
@@ -33,6 +35,7 @@ export default function FavouritesList({ data }: FavouritesListProps) {
                 imgSrc={item.imgSrc}
                 category={item.category}
                 price={item.price}
+                isFavoritedByCurrentUser={item.isFavoritedByCurrentUser}
               />
             ))}
           </div>
