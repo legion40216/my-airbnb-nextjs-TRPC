@@ -3,6 +3,7 @@ import { getQueryClient, trpc } from '@/trpc/server';
 import { dehydrate, HydrationBoundary } from '@tanstack/react-query';
 import PropertiesView from './_modules/view/properties-view';
 import { currentUser } from '@/hooks/server-auth-utils';
+
 import EmptyState from '@/components/global-ui/empty-state';
 
 export default async function PropertiesPage() {

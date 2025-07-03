@@ -28,12 +28,12 @@ export const PropertiesSection = () => {
 const PropertiesSectionContent = () => {
   const [data] = trpc.properties.getUserProperties.useSuspenseQuery();
   const properties = data.listings;
-  // Handle no reservations case
+
   if (properties.length === 0) {
     return (
       <EmptyState 
-      title="No reservations found" 
-      subtitle="You have no reservations on your properties." 
+      title="No properties found" 
+      subtitle="You have no properties." 
       />
     );
   }
