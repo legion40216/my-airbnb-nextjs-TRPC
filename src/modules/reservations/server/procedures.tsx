@@ -67,7 +67,9 @@ export const reservationsRouter = createTRPCRouter({
     }),
 
   getUserReservations: protectedProcedure.query(async ({ ctx }) => {
-    if (!ctx.betterAuthUserId) {
+    const userId = ctx.betterAuthUserId;
+
+    if (!userId) {
       throw new TRPCError({
         code: "UNAUTHORIZED",
         message: "User not authenticated",
@@ -77,14 +79,16 @@ export const reservationsRouter = createTRPCRouter({
     try {
       const reservations = await prisma.reservation.findMany({
         where: {
-          userId: ctx.betterAuthUserId,
+          listing: {
+            userId: userId, // <-- only fetch reservations on your listings
+          },
         },
         include: {
           listing: {
             include: {
               favouritedBy: {
                 where: {
-                  userId: ctx.betterAuthUserId,
+                  userId: userId,
                 },
                 select: {
                   id: true,
@@ -92,21 +96,20 @@ export const reservationsRouter = createTRPCRouter({
               },
             },
           },
-          user: true,
+          user: true, // guest who made the reservation
         },
         orderBy: {
           startDate: "desc",
         },
       });
 
-      // Transform the data to include isFavorited boolean
+      // Add isFavorited logic
       const reservationsWithFavoriteStatus = reservations.map(
         (reservation) => ({
           ...reservation,
           listing: {
             ...reservation.listing,
             isFavorited: reservation.listing.favouritedBy.length > 0,
-            // Remove the favouritedBy array since we don't need it anymore
             favouritedBy: undefined,
           },
         })
@@ -130,7 +133,9 @@ export const reservationsRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      if (!ctx.betterAuthUserId) {
+      const userId = ctx.betterAuthUserId;
+
+      if (!userId) {
         throw new TRPCError({
           code: "UNAUTHORIZED",
           message: "User not authenticated",
@@ -140,13 +145,16 @@ export const reservationsRouter = createTRPCRouter({
       try {
         const { reservationId } = input;
 
-        // Check if reservation exists and user owns it
         const reservation = await prisma.reservation.findUnique({
           where: { id: reservationId },
           select: {
             id: true,
             userId: true,
-            startDate: true,
+            listing: {
+              select: {
+                userId: true,
+              },
+            },
           },
         });
 
@@ -157,23 +165,17 @@ export const reservationsRouter = createTRPCRouter({
           });
         }
 
-        if (reservation.userId !== ctx.betterAuthUserId) {
+        const isGuest = reservation.userId === userId;
+        const isHost = reservation.listing.userId === userId;
+
+        if (!isGuest && !isHost) {
           throw new TRPCError({
             code: "FORBIDDEN",
-            message: "You cannot delete a reservation you do not own",
+            message: "You do not have permission to delete this reservation",
           });
         }
 
-        // // Optional: Check if reservation is in the future (business logic)
-        // const now = new Date();
-        // if (reservation.startDate <= now) {
-        //   throw new TRPCError({
-        //     code: "CONFLICT",
-        //     message: "Cannot delete past or ongoing reservations",
-        //   });
-        // }
-
-        const deletedReservation = await prisma.reservation.delete({
+        await prisma.reservation.delete({
           where: { id: reservationId },
         });
 
@@ -182,22 +184,19 @@ export const reservationsRouter = createTRPCRouter({
           message: "Reservation deleted successfully",
         };
       } catch (error) {
-        // Re-throw tRPC errors as-is
-        if (error instanceof TRPCError) {
-          throw error;
-        }
+        if (error instanceof TRPCError) throw error;
 
         console.error("Error reservations [delete]:", error);
 
-        // Handle specific Prisma errors
-        if (error instanceof Prisma.PrismaClientKnownRequestError) {
-          if (error.code === "P2025") {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Reservation not found or already deleted",
-              cause: error,
-            });
-          }
+        if (
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          error.code === "P2025"
+        ) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Reservation not found or already deleted",
+            cause: error,
+          });
         }
 
         throw new TRPCError({
